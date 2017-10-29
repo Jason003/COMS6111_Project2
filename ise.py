@@ -33,10 +33,8 @@ def requery():
 
 def query():
     """Send request to Google Custom Search endpoint."""
+    print("=========== Iteration: ### - Query: " + QUERY + "===========")
     url = URL.substitute(client_key = CLIENT_KEY, engine_key = ENGINE_KEY, query = QUERY)
-    print("--- REMOVE FROM HERE ---")
-    print(url)
-    print("--- TO HERE --- ")
     response = requests.get(url)
     items = response.json()["items"]
     process(items)
@@ -47,11 +45,11 @@ def process(items):
         # check if url has already processed
         if item["link"] not in URL_HISTORY:
             # process new url
+            print("Processing: " + item["link"])
             blob = fetch_site_blob(item["link"])
             text = extract_text(blob)
             relations = find_relations(text)
             # identify_quality_tuples()
-            return
         else:
             print("--- REMOVE FROM HERE ---")
             print("skip " + item["link"])
@@ -91,42 +89,52 @@ def extract_text(blob):
 
 def find_relations(text):
     """Annotate text with the Stanford CoreNLP."""
-    print("below is still in progress!")
-    # client = NLPCoreClient(STANFORD_CORENLP_PATH)
-    #
-    # # first pipeline
-    # properties = {
-    # 	"annotators": "tokenize,ssplit,pos,lemma,ner,relation",
-    # 	"parse.model": "edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz",
-    # 	"ner.useSUTime": "0"
-    # 	}
+    client = NLPCoreClient(STANFORD_CORENLP_PATH)
+    properties = {
+        "annotators": "",
+        "parse.model": "edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz",
+        "ner.useSUTime": "0"
+    }
+
+
+    print ("find relations doesn't work yet!")
+    # annotate first pipeline
+    # properties["annotators"] = "tokenize,ssplit,pos,lemma,ner,relation"
     # doc = client.annotate(text=text, properties=properties)
     #
-    # # create second pipeline text
-    # text = []
+    # # extract sentences for second pipeline
+    # sentences = []
     # for sentence in doc.sentences:
-    #     newSentence = ""
-    #     for token in sentence.tokens:
-    #         newSentence += " " + token.word
-    #     text.append(newSentence)
-    #
-    # # second pipeline
-    # properties["annotators"] += ",parse"
-    # doc = client.annotate(text=text, properties=properties)
-    #
-    # # build tuples out of the docs
-    # relations = []
-    # for sentence in doc.sentences:
-    #     r = {}
-    #     r["EntityType1"] = sentence.entities[0].type
-    #     r["EntityValue1"] = sentence.entities[0].value
-    #     r["EntityType2"] = sentence.entities[1].type
-    #     r["EntityValue2"] = sentence.entities[1].value
     #     print (len(sentence.relations))
-    #     print(sentence.relations[0])
-    #     relations.append(r)
+    #     for relation in sentence.relations:
+    #         print (relation.entities)
+    #     s = ""
+    #     for token in sentence.tokens:
+    #         s += " " + token.word
+    #     sentences.append(s)
     #
-    # print (relations)
+    # print(sentences)
+
+    # annotate second pipeline
+    # properties["annotators"] = "tokenize,ssplit,pos,lemma,ner,parse,relation"
+    # doc = client.annotate(text=sentences, properties=properties)
+    #
+    # print(doc.sentences[0].relations[0])
+
+    # extract relations into dict
+                # # build tuples out of the docs
+                # relations = []
+                # for sentence in doc.sentences:
+                #     r = {}
+                #     r["EntityType1"] = sentence.entities[0].type
+                #     r["EntityValue1"] = sentence.entities[0].value
+                #     r["EntityType2"] = sentence.entities[1].type
+                #     r["EntityValue2"] = sentence.entities[1].value
+                #     print (len(sentence.relations))
+                #     print(sentence.relations[0])
+                #     relations.append(r)
+                #
+                # print (relations)
 
 def identify_quality_tuples(tuples):
     """Identify new tuples with confidence at least equal to the requested threshold."""
