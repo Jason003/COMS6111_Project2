@@ -11,31 +11,6 @@ THRESHOLD = 1.0
 QUERY = "bill gates microsoft"
 OUTPUT_AMOUNT = 3
 
-def print_parameters():
-    print("Parameters:")
-    print("Client key     = " + CLIENT_KEY)
-    print("Engine key     = " + ENGINE_KEY)
-    print("Relation       = " + RELATION)
-    print("Threshold      = %.1f" % (THRESHOLD))
-    print("Query          = " + QUERY)
-    print("# of Tuples    = %d" % (OUTPUT_AMOUNT))
-
-def processCLI():
-    """Read values from cli and store in variables."""
-    if len(sys.argv) > 1: CLIENT_KEY = sys.argv[1]
-
-    if len(sys.argv) > 2: ENGINE_KEY = sys.argv[2]
-
-    if len(sys.argv) > 3: RELATION = getRelationship(int(sys.argv[3]))
-
-    if len(sys.argv) > 4: THRESHOLD = float(sys.argv[4])
-
-    if len(sys.argv) > 5: QUERY = sys.argv[5].lower()
-
-    if len(sys.argv) > 6: OUTPUT_AMOUNT = int(sys.argv[6])
-
-    print_parameters()
-
 def getRelationship(i):
     """Return relation string for integer input."""
     relationships = ["Live_In", "Located_In", "OrgBased_In", "Work_For"]
@@ -95,6 +70,31 @@ def main():
     # query
 
     print("Finished")
+
+def print_parameters():
+    print("Parameters:")
+    print("Client key     = " + CLIENT_KEY)
+    print("Engine key     = " + ENGINE_KEY)
+    print("Relation       = " + RELATION)
+    print("Threshold      = %.1f" % (THRESHOLD))
+    print("Query          = " + QUERY)
+    print("# of Tuples    = %d" % (OUTPUT_AMOUNT))
+
+def processCLI():
+    """Read values from cli and store in variables."""
+    if len(sys.argv) > 1: CLIENT_KEY = sys.argv[1]
+
+    if len(sys.argv) > 2: ENGINE_KEY = sys.argv[2]
+
+    if len(sys.argv) > 3: RELATION = getRelationship(int(sys.argv[3]))
+
+    if len(sys.argv) > 4: THRESHOLD = float(sys.argv[4])
+
+    if len(sys.argv) > 5: QUERY = sys.argv[5].lower()
+
+    if len(sys.argv) > 6: OUTPUT_AMOUNT = int(sys.argv[6])
+
+    print_parameters()
 
 if __name__ == '__main__':
     sys.exit(main())
