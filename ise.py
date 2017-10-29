@@ -6,15 +6,17 @@ import requests
 
 from bs4 import BeautifulSoup
 from string import Template
-from ./PythonNNLPCore/NLPCore import NLPCoreClient
+from NLPCore import NLPCoreClient
 
 # Configuration variables
 CLIENT_KEY = "AIzaSyCATX_cG2DgsJjFtCdgcThfR2xaH7MSMl0"
 ENGINE_KEY = "010829534362544137563:ndji7c0ivva"
 RELATION = "Work_For"
-THRESHOLD = 1.0
+THRESHOLD = 0.25
 QUERY = "bill gates microsoft"
 TARGET_TUPLE_AMT = 3
+
+STANFORD_CORENLP_PATH = "stanford-corenlp-full-2017-06-09"
 
 # Google API query template
 URL = Template("https://www.googleapis.com/customsearch/v1?key=$client_key&cx=$engine_key&q=$query")
@@ -22,13 +24,6 @@ URL_HISTORY = []
 
 # List of extracted tuples
 EXTRACTED_TUPLES = []
-
-def get_relationship(i):
-    """Return relation string for integer input."""
-    relationships = ["Live_In", "Located_In", "OrgBased_In", "Work_For"]
-    if i < len(relationships):
-        return relationships[i-1]
-    return relationships[3]
 
 def requery():
     """Select unused, high-confidence, tuple then query and process."""
@@ -54,8 +49,8 @@ def process(items):
             # process new url
             blob = fetch_site_blob(item["link"])
             text = extract_text(blob)
-            annotate(text)
-            # identify tuples
+            relations = find_relations(text)
+            # identify_quality_tuples()
             return
         else:
             print("--- REMOVE FROM HERE ---")
@@ -94,13 +89,49 @@ def extract_text(blob):
     text = '\n'.join(chunk for chunk in chunks if chunk)
     return text
 
-def annotate(text):
+def find_relations(text):
     """Annotate text with the Stanford CoreNLP."""
-    pass
+    print("below is still in progress!")
+    # client = NLPCoreClient(STANFORD_CORENLP_PATH)
+    #
+    # # first pipeline
+    # properties = {
+    # 	"annotators": "tokenize,ssplit,pos,lemma,ner,relation",
+    # 	"parse.model": "edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz",
+    # 	"ner.useSUTime": "0"
+    # 	}
+    # doc = client.annotate(text=text, properties=properties)
+    #
+    # # create second pipeline text
+    # text = []
+    # for sentence in doc.sentences:
+    #     newSentence = ""
+    #     for token in sentence.tokens:
+    #         newSentence += " " + token.word
+    #     text.append(newSentence)
+    #
+    # # second pipeline
+    # properties["annotators"] += ",parse"
+    # doc = client.annotate(text=text, properties=properties)
+    #
+    # # build tuples out of the docs
+    # relations = []
+    # for sentence in doc.sentences:
+    #     r = {}
+    #     r["EntityType1"] = sentence.entities[0].type
+    #     r["EntityValue1"] = sentence.entities[0].value
+    #     r["EntityType2"] = sentence.entities[1].type
+    #     r["EntityValue2"] = sentence.entities[1].value
+    #     print (len(sentence.relations))
+    #     print(sentence.relations[0])
+    #     relations.append(r)
+    #
+    # print (relations)
 
-def identify():
-    """Identify new tuples."""
-    # identify tuples
+def identify_quality_tuples(tuples):
+    """Identify new tuples with confidence at least equal to the requested threshold."""
+    for t in tuples:
+        print (t)
     # check if they've already been identified
     pass
 
@@ -122,25 +153,38 @@ def print_parameters():
     print("Client key     = " + CLIENT_KEY)
     print("Engine key     = " + ENGINE_KEY)
     print("Relation       = " + RELATION)
-    print("Threshold      = %.1f" % (THRESHOLD))
+    print("Threshold      = %.3f" % (THRESHOLD))
     print("Query          = " + QUERY)
     print("# of Tuples    = %d" % (TARGET_TUPLE_AMT))
 
 def process_CLI():
     """Read values from cli and store in variables."""
+    global CLIENT_KEY
     if len(sys.argv) > 1: CLIENT_KEY = sys.argv[1]
 
+    global ENGINE_KEY
     if len(sys.argv) > 2: ENGINE_KEY = sys.argv[2]
 
+    global RELATION
     if len(sys.argv) > 3: RELATION = get_relationship(int(sys.argv[3]))
 
+    global THRESHOLD
     if len(sys.argv) > 4: THRESHOLD = float(sys.argv[4])
 
+    global QUERY
     if len(sys.argv) > 5: QUERY = sys.argv[5].lower()
 
+    global TARGET_TUPLE_AMT
     if len(sys.argv) > 6: TARGET_TUPLE_AMT = int(sys.argv[6])
 
     print_parameters()
+
+def get_relationship(i):
+    """Return relation string for integer input."""
+    relationships = ["Live_In", "Located_In", "OrgBased_In", "Work_For"]
+    if i < len(relationships):
+        return relationships[i-1]
+    return relationships[3]
 
 if __name__ == '__main__':
     sys.exit(main())
