@@ -16,8 +16,7 @@ OUTPUT_AMOUNT = 3
 
 # Google API query template
 URL = Template("https://www.googleapis.com/customsearch/v1?key=$client_key&cx=$engine_key&q=$query")
-
-
+URL_HISTORY = []
 
 def getRelationship(i):
     """Return relation string for integer input."""
@@ -28,6 +27,8 @@ def getRelationship(i):
 
 def requery():
     """Select unused, high-confidence, tuple then query and process."""
+    # check if done
+    # otherwise, find new query term
     pass
 
 def query():
@@ -38,19 +39,23 @@ def query():
     print("--- TO HERE --- ")
     response = requests.get(url)
     items = response.json()["items"]
-    print (items)
+    process(items)
 
-def process():
+def process(items):
     """Process each result from Google search."""
-    # check if already processed
-    # process new url
-        # fetch HTML
-        # extract plain text
-        # annotate text
-        # identify tuples
+    for item in items:
+        # check if url has already processed
+        if item["link"] not in URL_HISTORY:
+            # process new url
+                # fetch HTML
+                # extract plain text
+                # annotate text
+                # identify tuples
+            print("new")
+        else:
+            print("skip " + item["link"])
 
-    # check if done
-    # else, requery
+    # requery
     pass
 
 def fetchHTML():
