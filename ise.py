@@ -6,6 +6,7 @@ import requests
 
 from bs4 import BeautifulSoup
 from string import Template
+from ./PythonNNLPCore/NLPCore import NLPCoreClient
 
 # Configuration variables
 CLIENT_KEY = "AIzaSyCATX_cG2DgsJjFtCdgcThfR2xaH7MSMl0"
