@@ -4,3 +4,6 @@
 /lib
 .Python
 pip-selfcheck.json
+
+# Stanford CoreNLP
+/stanford-corenlp-full-2017-06-09
