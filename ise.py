@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import requests
+
+from string import Template
 
 # Configuration variables
 CLIENT_KEY = "AIzaSyCATX_cG2DgsJjFtCdgcThfR2xaH7MSMl0"
@@ -10,6 +13,11 @@ RELATION = "Work_For"
 THRESHOLD = 1.0
 QUERY = "bill gates microsoft"
 OUTPUT_AMOUNT = 3
+
+# Google API query template
+URL = Template("https://www.googleapis.com/customsearch/v1?key=$client_key&cx=$engine_key&q=$query")
+
+
 
 def getRelationship(i):
     """Return relation string for integer input."""
@@ -24,8 +32,13 @@ def requery():
 
 def query():
     """Send request to Google Custom Search endpoint."""
-    # process
-    pass
+    url = URL.substitute(client_key = CLIENT_KEY, engine_key = ENGINE_KEY, query = QUERY)
+    print("--- REMOVE FROM HERE ---")
+    print(url)
+    print("--- TO HERE --- ")
+    response = requests.get(url)
+    items = response.json()["items"]
+    print (items)
 
 def process():
     """Process each result from Google search."""
@@ -66,10 +79,10 @@ def progressCheck():
 def main():
     """Main entry point for the script."""
     processCLI()
+    query()
+    #print_result
 
-    # query
-
-    print("Finished")
+    print("Finished.")
 
 def print_parameters():
     print("Parameters:")
