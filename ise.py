@@ -12,7 +12,7 @@ ENGINE_KEY = "010829534362544137563:ndji7c0ivva"
 RELATION = "Work_For"
 THRESHOLD = 1.0
 QUERY = "bill gates microsoft"
-OUTPUT_AMOUNT = 3
+TARGET_TUPLE_AMT = 3
 
 # Google API query template
 URL = Template("https://www.googleapis.com/customsearch/v1?key=$client_key&cx=$engine_key&q=$query")
@@ -96,7 +96,7 @@ def print_parameters():
     print("Relation       = " + RELATION)
     print("Threshold      = %.1f" % (THRESHOLD))
     print("Query          = " + QUERY)
-    print("# of Tuples    = %d" % (OUTPUT_AMOUNT))
+    print("# of Tuples    = %d" % (TARGET_TUPLE_AMT))
 
 def processCLI():
     """Read values from cli and store in variables."""
@@ -110,7 +110,7 @@ def processCLI():
 
     if len(sys.argv) > 5: QUERY = sys.argv[5].lower()
 
-    if len(sys.argv) > 6: OUTPUT_AMOUNT = int(sys.argv[6])
+    if len(sys.argv) > 6: TARGET_TUPLE_AMT = int(sys.argv[6])
 
     print_parameters()
 
