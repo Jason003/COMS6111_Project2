@@ -1,5 +1,8 @@
 # COMS6111_Project2
 
+## Project dependencies
+- BeautifulSoup
+
 ## Notes
 
 Custom Search API key:<br/>

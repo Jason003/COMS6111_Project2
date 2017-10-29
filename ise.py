@@ -4,7 +4,7 @@
 import sys
 import requests
 
-# from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup
 from string import Template
 
 # Configuration variables
@@ -51,11 +51,12 @@ def process(items):
         # check if url has already processed
         if item["link"] not in URL_HISTORY:
             # process new url
-                html = fetchHTML(item["link"])
-                # text = extractText(html)
-                # extract plain text
+                blob = fetchSiteBlob(item["link"])
+                text = extractText(blob)
+                print(text)
                 # annotate text
                 # identify tuples
+                return
         else:
             print("--- REMOVE FROM HERE ---")
             print("skip " + item["link"])
@@ -64,14 +65,32 @@ def process(items):
     # requery
     pass
 
-def fetchHTML(url):
+def fetchSiteBlob(url):
     """Scrap HTML from URL."""
     doc = requests.get(url, timeout=10)
     return doc.text
 
-def extractText():
-    """Strip markdown."""
-    pass
+def extractText(blob):
+    """Separate text from markdown."""
+    html = BeautifulSoup(blob, "html.parser")
+    body = html.find('body')
+
+    # remove any script or style elements
+    for chunk in body(["script", "style"]):
+        chunk.extract()
+
+    # raw text
+    rawText = body.get_text()
+
+    # reduce whitespace
+    lines = (line.strip() for line in rawText.splitlines())
+
+    # break multi-headlines into a single line
+    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+
+    # drop blank lines
+    text = '\n'.join(chunk for chunk in chunks if chunk)
+    print (text)
 
 def annotate():
     """Annotate text with the Stanford CoreNLP."""
