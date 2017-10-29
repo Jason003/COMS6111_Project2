@@ -22,7 +22,7 @@ URL_HISTORY = []
 # List of extracted tuples
 EXTRACTED_TUPLES = []
 
-def getRelationship(i):
+def get_relationship(i):
     """Return relation string for integer input."""
     relationships = ["Live_In", "Located_In", "OrgBased_In", "Work_For"]
     if i < len(relationships):
@@ -51,8 +51,8 @@ def process(items):
         # check if url has already processed
         if item["link"] not in URL_HISTORY:
             # process new url
-                blob = fetchSiteBlob(item["link"])
-                text = extractText(blob)
+                blob = fetch_site_blob(item["link"])
+                text = extract_text(blob)
                 print(text)
                 # annotate text
                 # identify tuples
@@ -65,12 +65,12 @@ def process(items):
     # requery
     pass
 
-def fetchSiteBlob(url):
+def fetch_site_blob(url):
     """Scrap HTML from URL."""
     doc = requests.get(url, timeout=10)
     return doc.text
 
-def extractText(blob):
+def extract_text(blob):
     """Separate text from markdown."""
     html = BeautifulSoup(blob, "html.parser")
     body = html.find('body')
@@ -102,14 +102,14 @@ def identify():
     # check if they've already been identified
     pass
 
-def progressCheck():
+def progress_check():
     """Done if k matches."""
     pass
 
 
 def main():
     """Main entry point for the script."""
-    processCLI()
+    process_CLI()
     query()
     #print_result
 
@@ -124,13 +124,13 @@ def print_parameters():
     print("Query          = " + QUERY)
     print("# of Tuples    = %d" % (TARGET_TUPLE_AMT))
 
-def processCLI():
+def process_CLI():
     """Read values from cli and store in variables."""
     if len(sys.argv) > 1: CLIENT_KEY = sys.argv[1]
 
     if len(sys.argv) > 2: ENGINE_KEY = sys.argv[2]
 
-    if len(sys.argv) > 3: RELATION = getRelationship(int(sys.argv[3]))
+    if len(sys.argv) > 3: RELATION = get_relationship(int(sys.argv[3]))
 
     if len(sys.argv) > 4: THRESHOLD = float(sys.argv[4])
 
