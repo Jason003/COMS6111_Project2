@@ -2,6 +2,7 @@
 
 ## Project dependencies
 - BeautifulSoup
+- stanford-corenlp-full-2017 on the same path as `ise.py`
 
 ## Notes
 
