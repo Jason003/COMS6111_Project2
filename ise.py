@@ -4,6 +4,7 @@
 import sys
 import requests
 
+# from bs4 import BeautifulSoup
 from string import Template
 
 # Configuration variables
@@ -17,6 +18,9 @@ TARGET_TUPLE_AMT = 3
 # Google API query template
 URL = Template("https://www.googleapis.com/customsearch/v1?key=$client_key&cx=$engine_key&q=$query")
 URL_HISTORY = []
+
+# List of extracted tuples
+EXTRACTED_TUPLES = []
 
 def getRelationship(i):
     """Return relation string for integer input."""
@@ -47,20 +51,23 @@ def process(items):
         # check if url has already processed
         if item["link"] not in URL_HISTORY:
             # process new url
-                # fetch HTML
+                html = fetchHTML(item["link"])
+                # text = extractText(html)
                 # extract plain text
                 # annotate text
                 # identify tuples
-            print("new")
         else:
+            print("--- REMOVE FROM HERE ---")
             print("skip " + item["link"])
+            print ("--- TO HERE ---")
 
     # requery
     pass
 
-def fetchHTML():
-    """Fetch url HTML."""
-    pass
+def fetchHTML(url):
+    """Scrap HTML from URL."""
+    doc = requests.get(url, timeout=10)
+    return doc.text
 
 def extractText():
     """Strip markdown."""
