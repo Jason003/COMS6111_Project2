@@ -7,3 +7,9 @@ pip-selfcheck.json
 
 # Stanford CoreNLP
 /stanford-corenlp-full-2017-06-09
+
+# PythonNLPCore example output
+PythonNLPCore/__pycache__
+PythonNLPCore/input.txt
+PythonNLPCore/input.txt.xml
+PythonNLPCore/props.properties
