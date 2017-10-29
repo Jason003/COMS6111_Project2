@@ -51,12 +51,11 @@ def process(items):
         # check if url has already processed
         if item["link"] not in URL_HISTORY:
             # process new url
-                blob = fetch_site_blob(item["link"])
-                text = extract_text(blob)
-                print(text)
-                # annotate text
-                # identify tuples
-                return
+            blob = fetch_site_blob(item["link"])
+            text = extract_text(blob)
+            annotate(text)
+            # identify tuples
+            return
         else:
             print("--- REMOVE FROM HERE ---")
             print("skip " + item["link"])
@@ -73,6 +72,8 @@ def fetch_site_blob(url):
 def extract_text(blob):
     """Separate text from markdown."""
     html = BeautifulSoup(blob, "html.parser")
+
+    # TODO there are probably opportunites to improve the code below
     body = html.find('body')
 
     # remove any script or style elements
@@ -90,9 +91,9 @@ def extract_text(blob):
 
     # drop blank lines
     text = '\n'.join(chunk for chunk in chunks if chunk)
-    print (text)
+    return text
 
-def annotate():
+def annotate(text):
     """Annotate text with the Stanford CoreNLP."""
     pass
 
