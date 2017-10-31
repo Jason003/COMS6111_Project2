@@ -48,8 +48,8 @@ def process(items):
             print("Processing: " + item["link"])
             blob = fetch_site_blob(item["link"])
             text = extract_text(blob)
-            eligible_sentences = find_query_term_occurrences(text)
-            #tag_relations
+            eligible_sentences = find_query_term_occurrences(text) # (pipeline 1)
+            #tag_relations (pipeline 2)
 
         else:
             print("--- REMOVE FROM HERE ---")
@@ -87,7 +87,7 @@ def extract_text(blob):
     chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
 
     # drop blank lines
-    text = '\n'.join(chunk for chunk in chunks if chunk)
+    text = '. '.join(chunk for chunk in chunks if chunk)
     return text
 
 def eval_sentence(s):
@@ -96,8 +96,17 @@ def eval_sentence(s):
         if token.word.lower() == queryTokens[0]:
             queryTokens.pop(0)
             if (len(queryTokens) == 0):
+                printSentence(s)
                 return True
     return False
+
+# helper method to print sentences from string
+def printSentence(s):
+    str = ''
+    for tkn in s.tokens:
+        str += tkn.word + ' '
+    print(str[:-1])
+
 
 def find_query_term_occurrences(text):
     """Annotate text with the Stanford CoreNLP."""
