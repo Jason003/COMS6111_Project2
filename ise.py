@@ -49,7 +49,7 @@ def process(items):
             blob = fetch_site_blob(item["link"])
             text = extract_text(blob)
             phrases = find_query_term_occurrences(text) # (pipeline 1)
-            #tag_relations (pipeline 2)
+            tag_relations(phrases)
 
         else:
             print("--- REMOVE FROM HERE ---")
@@ -98,7 +98,7 @@ def eval_sentence(s):
         if token.word.lower() == queryTokens[0]:
             queryTokens.pop(0)
             if (len(queryTokens) == 0):
-                printSentence(s)
+                # printSentence(s)
                 return sentence
     return False
 
@@ -131,6 +131,22 @@ def find_query_term_occurrences(text):
             eligiblePhrases.append(s)
 
     return eligiblePhrases
+
+
+def tag_relations(phrases):
+    client = NLPCoreClient(STANFORD_CORENLP_PATH)
+    properties = {
+        "annotators": "",
+        "parse.model": "edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz",
+        "ner.useSUTime": "0"
+    }
+
+    # annotate first pipeline
+    properties["annotators"] = "tokenize,ssplit,pos,lemma,ner,parse,relation"
+    doc = client.annotate(text=phrases, properties=properties)
+    print(doc.sentences[0].relations[0])
+
+
 
 def identify_quality_tuples(tuples):
     """Identify new tuples with confidence at least equal to the requested threshold."""
