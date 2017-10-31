@@ -48,13 +48,16 @@ def process(items):
             print("Processing: " + item["link"])
             blob = fetch_site_blob(item["link"])
             text = extract_text(blob)
-            relations = find_relations(text)
-            # identify_quality_tuples()
+            eligible_sentences = find_query_term_occurrences(text)
+            #tag_relations
+
         else:
             print("--- REMOVE FROM HERE ---")
             print("skip " + item["link"])
             print ("--- TO HERE ---")
 
+    # filter_by_confidence
+    # find new tuples
     # requery
     pass
 
@@ -87,7 +90,16 @@ def extract_text(blob):
     text = '\n'.join(chunk for chunk in chunks if chunk)
     return text
 
-def find_relations(text):
+def eval_sentence(s):
+    queryTokens = QUERY.split(' ')
+    for token in s.tokens:
+        if token.word.lower() == queryTokens[0]:
+            queryTokens.pop(0)
+            if (len(queryTokens) == 0):
+                return True
+    return False
+
+def find_query_term_occurrences(text):
     """Annotate text with the Stanford CoreNLP."""
     client = NLPCoreClient(STANFORD_CORENLP_PATH)
     properties = {
@@ -96,45 +108,51 @@ def find_relations(text):
         "ner.useSUTime": "0"
     }
 
-
-    print ("find relations doesn't work yet!")
     # annotate first pipeline
-    # properties["annotators"] = "tokenize,ssplit,pos,lemma,ner,relation"
-    # doc = client.annotate(text=text, properties=properties)
-    #
-    # # extract sentences for second pipeline
-    # sentences = []
-    # for sentence in doc.sentences:
-    #     print (len(sentence.relations))
-    #     for relation in sentence.relations:
-    #         print (relation.entities)
-    #     s = ""
-    #     for token in sentence.tokens:
-    #         s += " " + token.word
-    #     sentences.append(s)
-    #
-    # print(sentences)
+    properties["annotators"] = "tokenize,ssplit,pos,lemma,ner"
+    doc = client.annotate(text=[text], properties=properties)
 
-    # annotate second pipeline
-    # properties["annotators"] = "tokenize,ssplit,pos,lemma,ner,parse,relation"
-    # doc = client.annotate(text=sentences, properties=properties)
-    #
-    # print(doc.sentences[0].relations[0])
+    # find sentences with matching tokens from query
+    eligiblePhrases = []
+    for sentence in doc.sentences:
+        hasMatch = eval_sentence(sentence)
+        if hasMatch:
+            print("yipee")
 
-    # extract relations into dict
-                # # build tuples out of the docs
-                # relations = []
-                # for sentence in doc.sentences:
-                #     r = {}
-                #     r["EntityType1"] = sentence.entities[0].type
-                #     r["EntityValue1"] = sentence.entities[0].value
-                #     r["EntityType2"] = sentence.entities[1].type
-                #     r["EntityValue2"] = sentence.entities[1].value
-                #     print (len(sentence.relations))
-                #     print(sentence.relations[0])
-                #     relations.append(r)
-                #
-                # print (relations)
+    # return sentences with matches
+                        # # extract sentences for second pipeline
+                        # sentences = []
+                        # for sentence in doc.sentences:
+                        #     print (len(sentence.relations))
+                        #     for relation in sentence.relations:
+                        #         print (relation.entities)
+                        #     s = ""
+                        #     for token in sentence.tokens:
+                        #         s += " " + token.word
+                        #     sentences.append(s)
+                        #
+                        # print(sentences)
+
+                        # annotate second pipeline
+                        # properties["annotators"] = "tokenize,ssplit,pos,lemma,ner,parse,relation"
+                        # doc = client.annotate(text=sentences, properties=properties)
+                        #
+                        # print(doc.sentences[0].relations[0])
+
+                        # extract relations into dict
+                                    # # build tuples out of the docs
+                                    # relations = []
+                                    # for sentence in doc.sentences:
+                                    #     r = {}
+                                    #     r["EntityType1"] = sentence.entities[0].type
+                                    #     r["EntityValue1"] = sentence.entities[0].value
+                                    #     r["EntityType2"] = sentence.entities[1].type
+                                    #     r["EntityValue2"] = sentence.entities[1].value
+                                    #     print (len(sentence.relations))
+                                    #     print(sentence.relations[0])
+                                    #     relations.append(r)
+                                    #
+                                    # print (relations)
 
 def identify_quality_tuples(tuples):
     """Identify new tuples with confidence at least equal to the requested threshold."""
