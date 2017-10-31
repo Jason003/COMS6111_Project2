@@ -49,16 +49,21 @@ def process(items):
             blob = fetch_site_blob(item["link"])
             text = extract_text(blob)
             phrases = find_query_term_occurrences(text) # (pipeline 1)
-            tag_relations(phrases)
+            tag_relations(phrases) # more TODO
 
         else:
             print("--- REMOVE FROM HERE ---")
             print("skip " + item["link"])
             print ("--- TO HERE ---")
 
-    # filter_by_confidence
-    # find new tuples
-    # requery
+    # 3.d) filter_by_confidence TODO
+    # 4. find new tuples TODO
+    if len(EXTRACTED_TUPLES) >= k:
+        # 5. check if we have k tuples TODO
+        pass
+    else:
+        # 6. otherwise requery
+        requery()
     pass
 
 def fetch_site_blob(url):
