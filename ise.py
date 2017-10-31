@@ -130,42 +130,7 @@ def find_query_term_occurrences(text):
         if s is not False:
             eligiblePhrases.append(s)
 
-    print (eligiblePhrases)
-
-    # return sentences with matches
-                        # # extract sentences for second pipeline
-                        # sentences = []
-                        # for sentence in doc.sentences:
-                        #     print (len(sentence.relations))
-                        #     for relation in sentence.relations:
-                        #         print (relation.entities)
-                        #     s = ""
-                        #     for token in sentence.tokens:
-                        #         s += " " + token.word
-                        #     sentences.append(s)
-                        #
-                        # print(sentences)
-
-                        # annotate second pipeline
-                        # properties["annotators"] = "tokenize,ssplit,pos,lemma,ner,parse,relation"
-                        # doc = client.annotate(text=sentences, properties=properties)
-                        #
-                        # print(doc.sentences[0].relations[0])
-
-                        # extract relations into dict
-                                    # # build tuples out of the docs
-                                    # relations = []
-                                    # for sentence in doc.sentences:
-                                    #     r = {}
-                                    #     r["EntityType1"] = sentence.entities[0].type
-                                    #     r["EntityValue1"] = sentence.entities[0].value
-                                    #     r["EntityType2"] = sentence.entities[1].type
-                                    #     r["EntityValue2"] = sentence.entities[1].value
-                                    #     print (len(sentence.relations))
-                                    #     print(sentence.relations[0])
-                                    #     relations.append(r)
-                                    #
-                                    # print (relations)
+    return eligiblePhrases
 
 def identify_quality_tuples(tuples):
     """Identify new tuples with confidence at least equal to the requested threshold."""
