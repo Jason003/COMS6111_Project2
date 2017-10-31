@@ -48,7 +48,7 @@ def process(items):
             print("Processing: " + item["link"])
             blob = fetch_site_blob(item["link"])
             text = extract_text(blob)
-            eligible_sentences = find_query_term_occurrences(text) # (pipeline 1)
+            phrases = find_query_term_occurrences(text) # (pipeline 1)
             #tag_relations (pipeline 2)
 
         else:
@@ -91,13 +91,15 @@ def extract_text(blob):
     return text
 
 def eval_sentence(s):
+    sentence = ''
     queryTokens = QUERY.split(' ')
     for token in s.tokens:
+        sentence += ' ' + token.word
         if token.word.lower() == queryTokens[0]:
             queryTokens.pop(0)
             if (len(queryTokens) == 0):
                 printSentence(s)
-                return True
+                return sentence
     return False
 
 # helper method to print sentences from string
@@ -124,9 +126,11 @@ def find_query_term_occurrences(text):
     # find sentences with matching tokens from query
     eligiblePhrases = []
     for sentence in doc.sentences:
-        hasMatch = eval_sentence(sentence)
-        if hasMatch:
-            print("yipee")
+        s = eval_sentence(sentence)
+        if s is not False:
+            eligiblePhrases.append(s)
+
+    print (eligiblePhrases)
 
     # return sentences with matches
                         # # extract sentences for second pipeline
