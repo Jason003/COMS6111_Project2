@@ -25,6 +25,9 @@ URL_HISTORY = []
 # List of extracted tuples
 EXTRACTED_TUPLES = []
 
+# List of relations we care about
+VALID_RELATIONS = ['Live_In','Located_In','OrgBased_In','Work_For']
+
 def requery():
     """Select unused, high-confidence, tuple then query and process."""
     # check if done
@@ -48,8 +51,9 @@ def process(items):
             print("Processing: " + item["link"])
             blob = fetch_site_blob(item["link"])
             text = extract_text(blob)
-            phrases = find_query_term_occurrences(text) # (pipeline 1)
-            tag_relations(phrases) # more TODO
+            if text is not None:
+                phrases = find_query_term_occurrences(text) # (pipeline 1)
+                tag_relations(phrases) # more TODO
 
         else:
             print("--- REMOVE FROM HERE ---")
@@ -59,10 +63,10 @@ def process(items):
     # 3.d) filter_by_confidence TODO
     # 4. find new tuples TODO
     if len(EXTRACTED_TUPLES) >= k:
-        # 5. check if we have k tuples TODO
+        # 5. check if we have k tuples TODO: Max
         pass
     else:
-        # 6. otherwise requery
+        # 6. otherwise requery: Max
         requery()
     pass
 
@@ -71,39 +75,47 @@ def fetch_site_blob(url):
     doc = requests.get(url, timeout=10)
     return doc.text
 
+# TODO: Alex
 def extract_text(blob):
     """Separate text from markdown."""
     html = BeautifulSoup(blob, "html.parser")
 
     # TODO there are probably opportunites to improve the code below
+    
     body = html.find('body')
 
-    # remove any script or style elements
-    for chunk in body(["script", "style"]):
-        chunk.extract()
+    if body is not None:
+        # remove any script or style elements
+        for chunk in body(["script", "style"]):
+            chunk.extract()
 
-    # raw text
-    rawText = body.get_text()
+        # raw text
+        rawText = body.get_text()
 
-    # reduce whitespace
-    lines = (line.strip() for line in rawText.splitlines())
+        # reduce whitespace
+        lines = (line.strip() for line in rawText.splitlines())
 
-    # break multi-headlines into a single line
-    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+        # break multi-headlines into a single line
+        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
 
-    # drop blank lines
-    text = '. '.join(chunk for chunk in chunks if chunk)
-    return text
+        # drop blank lines
+        text = '. '.join(chunk for chunk in chunks if chunk)
 
+        return text
+    else:
+        print('Cannot retrieve web page!  Skipping...')
+        return None
+
+# Looks for sentences which contain all of the query terms in order
 def eval_sentence(s):
     sentence = ''
     queryTokens = QUERY.split(' ')
     for token in s.tokens:
         sentence += ' ' + token.word
-        if token.word.lower() == queryTokens[0]:
-            queryTokens.pop(0)
+        if token.word.lower() in queryTokens:
+            queryTokens.remove(token.word.lower())
             if (len(queryTokens) == 0):
-                # printSentence(s)
+                printSentence(s) # TESTING
                 return sentence
     return False
 
@@ -126,7 +138,7 @@ def find_query_term_occurrences(text):
 
     # annotate first pipeline
     properties["annotators"] = "tokenize,ssplit,pos,lemma,ner"
-    doc = client.annotate(text=[text], properties=properties)
+    doc = client.annotate(text=text, properties=properties)
 
     # find sentences with matching tokens from query
     eligiblePhrases = []
@@ -136,6 +148,27 @@ def find_query_term_occurrences(text):
             eligiblePhrases.append(s)
 
     return eligiblePhrases
+
+# Records the relations
+# TODO: record in global params
+def record_relation(sentence, relation, testing = False):
+    s =  '======================\n'
+    s += 'Sentence:\n'
+    s += '\t'
+    for token in sentence.tokens:
+        s += token.word + ' '
+    s += '\nRelation Entities:\n'
+    for entity in relation.entities:
+        s += '\t' + str(entity) + '\n'
+    s += 'Above-Threshold Relation Types:\n'
+    relfound = False
+    for reltype in VALID_RELATIONS:
+        if reltype in relation.probabilities and reltype == RELATION and float(relation.probabilities[reltype]) > THRESHOLD:
+            # TODO record relation entities for relation type
+            s += '\t' + reltype + ' ; ' + relation.probabilities[reltype] + '\n'
+            relfound = True
+    if relfound and testing:
+        print(s)
 
 
 def tag_relations(phrases):
@@ -149,9 +182,11 @@ def tag_relations(phrases):
     # annotate first pipeline
     properties["annotators"] = "tokenize,ssplit,pos,lemma,ner,parse,relation"
     doc = client.annotate(text=phrases, properties=properties)
-    print(doc.sentences[0].relations[0])
 
-
+    # Iterate through all relations, evaluate and print and record
+    for sentence in doc.sentences:
+        for relation in sentence.relations:
+            record_relation(sentence, relation, testing=True)
 
 def identify_quality_tuples(tuples):
     """Identify new tuples with confidence at least equal to the requested threshold."""
