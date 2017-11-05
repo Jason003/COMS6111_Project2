@@ -3,6 +3,7 @@
 
 import sys
 import requests
+import re
 
 from bs4 import BeautifulSoup
 from string import Template
@@ -12,10 +13,12 @@ from NLPCore import NLPCoreClient
 CLIENT_KEY = "AIzaSyCATX_cG2DgsJjFtCdgcThfR2xaH7MSMl0"
 ENGINE_KEY = "010829534362544137563:ndji7c0ivva"
 RELATION = "Work_For"
-THRESHOLD = 0.25
+THRESHOLD = 0.35
 QUERY = "bill gates microsoft"
 TARGET_TUPLE_AMT = 3
+K = 10
 
+# Path to the client
 STANFORD_CORENLP_PATH = "stanford-corenlp-full-2017-06-09"
 
 # Google API query template
@@ -30,6 +33,7 @@ VALID_RELATIONS = ['Live_In','Located_In','OrgBased_In','Work_For']
 
 def requery():
     """Select unused, high-confidence, tuple then query and process."""
+    # TODO
     # check if done
     # otherwise, find new query term
     pass
@@ -39,49 +43,62 @@ def query():
     print("=========== Iteration: ### - Query: " + QUERY + "===========")
     url = URL.substitute(client_key = CLIENT_KEY, engine_key = ENGINE_KEY, query = QUERY)
     response = requests.get(url)
+    # print(response.json()) # TESTING
     items = response.json()["items"]
     process(items)
 
+# TODO remove testing printouts
 def process(items):
     """Process each result from Google search."""
     for item in items:
-        # check if url has already processed
+        # only process URLs once
         if item["link"] not in URL_HISTORY:
-            # process new url
+        # if item['link'] == 'https://en.wikipedia.org/wiki/Bill_Gates': # TESTING
             print("Processing: " + item["link"])
+
+            # Scrape site into blob
+            print('fetching blob...') # TESTING
             blob = fetch_site_blob(item["link"])
+
+            # Extract meaningful text from the blob
+            print('extracting text...') # TESTING
             text = extract_text(blob)
+
             if text is not None:
+                # turn the extracted text into phrases
+                print('finding query term occurrences...') # TESTING
                 phrases = find_query_term_occurrences(text) # (pipeline 1)
+
+                # tag relations from the phrases
+                print('tagging relations...') # TESTING
                 tag_relations(phrases) # more TODO
 
+            # Been there, done that
+            URL_HISTORY.append(item['link'])
         else:
             print("--- REMOVE FROM HERE ---")
             print("skip " + item["link"])
             print ("--- TO HERE ---")
 
     # 3.d) filter_by_confidence TODO
+
     # 4. find new tuples TODO
-    if len(EXTRACTED_TUPLES) >= k:
-        # 5. check if we have k tuples TODO: Max
+
+    if len(EXTRACTED_TUPLES) >= K:
+        # 5. check if we have k tuples TODO
         pass
     else:
-        # 6. otherwise requery: Max
+        # 6. otherwise requery
         requery()
     pass
 
-def fetch_site_blob(url):
-    """Scrap HTML from URL."""
-    doc = requests.get(url, timeout=10)
-    return doc.text
-
 # TODO: Alex
+# Text-extraction
 def extract_text(blob):
     """Separate text from markdown."""
     html = BeautifulSoup(blob, "html.parser")
 
     # TODO there are probably opportunites to improve the code below
-    
     body = html.find('body')
 
     if body is not None:
@@ -89,7 +106,7 @@ def extract_text(blob):
         for chunk in body(["script", "style"]):
             chunk.extract()
 
-        # raw text
+        # get raw text of web page body
         rawText = body.get_text()
 
         # reduce whitespace
@@ -98,26 +115,17 @@ def extract_text(blob):
         # break multi-headlines into a single line
         chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
 
-        # drop blank lines
-        text = '. '.join(chunk for chunk in chunks if chunk)
+        # Split each line on periods followed by a non-alpha-numeric, non-period character
+        # TODO: try inserting space after periods not followed by alpha-numeric character, then split on '. '
+        text = []
+        for chunk in chunks:
+            if chunk:
+                text.extend(re.split('\.[^a-zA-Z\d.]',chunk))
 
         return text
     else:
         print('Cannot retrieve web page!  Skipping...')
         return None
-
-# Looks for sentences which contain all of the query terms in order
-def eval_sentence(s):
-    sentence = ''
-    queryTokens = QUERY.split(' ')
-    for token in s.tokens:
-        sentence += ' ' + token.word
-        if token.word.lower() in queryTokens:
-            queryTokens.remove(token.word.lower())
-            if (len(queryTokens) == 0):
-                printSentence(s) # TESTING
-                return sentence
-    return False
 
 # helper method to print sentences from string
 def printSentence(s):
@@ -125,7 +133,6 @@ def printSentence(s):
     for tkn in s.tokens:
         str += tkn.word + ' '
     print(str[:-1])
-
 
 def find_query_term_occurrences(text):
     """Annotate text with the Stanford CoreNLP."""
@@ -149,8 +156,22 @@ def find_query_term_occurrences(text):
 
     return eligiblePhrases
 
+# Looks for sentences which contain all of the query terms
+def eval_sentence(s):
+    sentence = ''
+    queryTokens = QUERY.split(' ')
+    for token in s.tokens:
+        sentence += ' ' + token.word
+        if token.word.lower() in queryTokens:
+            queryTokens.remove(token.word.lower())
+            if (len(queryTokens) == 0):
+                # printSentence(s) # TESTING
+                return sentence
+    # printSentence(s) # TESTING
+    return False
+
 # Records the relations
-# TODO: record in global params
+# TODO: record in global params, change printouts to the format of example
 def record_relation(sentence, relation, testing = False):
     s =  '======================\n'
     s += 'Sentence:\n'
@@ -164,12 +185,10 @@ def record_relation(sentence, relation, testing = False):
     relfound = False
     for reltype in VALID_RELATIONS:
         if reltype in relation.probabilities and reltype == RELATION and float(relation.probabilities[reltype]) > THRESHOLD:
-            # TODO record relation entities for relation type
             s += '\t' + reltype + ' ; ' + relation.probabilities[reltype] + '\n'
             relfound = True
     if relfound and testing:
         print(s)
-
 
 def tag_relations(phrases):
     client = NLPCoreClient(STANFORD_CORENLP_PATH)
@@ -188,6 +207,12 @@ def tag_relations(phrases):
         for relation in sentence.relations:
             record_relation(sentence, relation, testing=True)
 
+# Scraper: returns document blob
+def fetch_site_blob(url):
+    """Scrape HTML from URL."""
+    doc = requests.get(url, timeout=10)
+    return doc.text
+
 def identify_quality_tuples(tuples):
     """Identify new tuples with confidence at least equal to the requested threshold."""
     for t in tuples:
@@ -198,7 +223,6 @@ def identify_quality_tuples(tuples):
 def progress_check():
     """Done if k matches."""
     pass
-
 
 def main():
     """Main entry point for the script."""
@@ -241,10 +265,10 @@ def process_CLI():
 
 def get_relationship(i):
     """Return relation string for integer input."""
-    relationships = ["Live_In", "Located_In", "OrgBased_In", "Work_For"]
-    if i < len(relationships):
-        return relationships[i-1]
-    return relationships[3]
+    VALID_RELATIONS = ["Live_In", "Located_In", "OrgBased_In", "Work_For"]
+    if i < len(VALID_RELATIONS):
+        return VALID_RELATIONS[i-1]
+    return VALID_RELATIONS[3]
 
 if __name__ == '__main__':
     sys.exit(main())
