@@ -173,23 +173,35 @@ def eval_sentence(s):
 # Records the relations
 # TODO: record in global params, change printouts to the format of example
 def record_relation(sentence, relation, testing = False):
-    s =  '=========== EXTRACTED RELATION ===========\n'
-    s += 'Sentence:\n'
-    s += '\t'
+
+    # Join words into full sentence
+    s = ''
     for token in sentence.tokens:
         s += token.word + ' '
-    s += '\nRelation Entities:\n'
+
+    # Define relation
+    index = 0
+    rObj = {}
     for entity in relation.entities:
-        s += '\t' + str(entity) + '\n'
-    s += 'Above-Threshold Relation Types:\n'
-    relfound = False
-    for reltype in VALID_RELATIONS:
-        if reltype in relation.probabilities and reltype == RELATION and float(relation.probabilities[reltype]) > THRESHOLD:
-            s += '\t' + reltype + ' ; ' + relation.probabilities[reltype] + '\n'
-            relfound = True
-    if relfound and testing:
-        s +=  '========== END OF RELATION DESC =========='
-        print(s)
+        index += 1
+        if entity.type == 'O': # don't want these types
+            return
+        else:
+            key = 'value' + str(index)
+            rObj[key] = entity.value
+            key = 'type' + str(index)
+            rObj[key] = entity.type
+
+    for r in VALID_RELATIONS:
+        if r in relation.probabilities and r == RELATION:
+            rObj['confidence'] = relation.probabilities[r]
+
+    # Print relation record
+    print ('=============== EXTRACTED RELATION ===============')
+    print ('Sentence: ' + s)
+    printRelationObj(rObj)
+    print ('============== END OF RELATION DESC ==============')
+
 
 # Pipeline 2
 def tag_relations(phrases):
@@ -205,6 +217,7 @@ def tag_relations(phrases):
     doc = client.annotate(text=phrases, properties=properties)
 
     # Iterate through all relations, evaluate and print and record
+
     for sentence in doc.sentences:
         for relation in sentence.relations:
             record_relation(sentence, relation, testing=True)
@@ -230,7 +243,6 @@ def main():
     """Main entry point for the script."""
     process_CLI()
     query()
-    #print_result
 
     print("Finished.")
 
@@ -247,6 +259,16 @@ def printIterationHeader():
     iteration = (len(URL_HISTORY) + 1)
     template = "=========== Iteration: %d - Query: " + QUERY + " ==========="
     print(template % (iteration))
+
+def printRelationObj(r):
+    s = ''
+    s += 'RelationType: ' + RELATION
+    s += (' | Confidence= %f ' % float(r['confidence']))
+    s += ' | EntityType1= ' + r['type1']
+    s += ' | EntityValue1= ' + r['value1']
+    s += ' | EntityType2= ' + r['type2']
+    s += ' | EntityValue2= ' + r['value2']
+    print(s)
 
 def process_CLI():
     """Read values from cli and store in variables."""
