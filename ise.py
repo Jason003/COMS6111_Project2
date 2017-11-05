@@ -40,7 +40,7 @@ def requery():
 
 def query():
     """Send request to Google Custom Search endpoint."""
-    print("=========== Iteration: ### - Query: " + QUERY + "===========")
+    printIterationHeader()
     url = URL.substitute(client_key = CLIENT_KEY, engine_key = ENGINE_KEY, query = QUERY)
     response = requests.get(url)
     # print(response.json()) # TESTING
@@ -53,7 +53,6 @@ def process(items):
     for item in items:
         # only process URLs once
         if item["link"] not in URL_HISTORY:
-        # if item['link'] == 'https://en.wikipedia.org/wiki/Bill_Gates': # TESTING
             print("Processing: " + item["link"])
 
             # Scrape site into blob
@@ -240,6 +239,11 @@ def print_parameters():
     print("Threshold      = %.3f" % (THRESHOLD))
     print("Query          = " + QUERY)
     print("# of Tuples    = %d" % (TARGET_TUPLE_AMT))
+
+def printIterationHeader():
+    iteration = (len(URL_HISTORY) + 1)
+    template = "=========== Iteration: %d - Query: " + QUERY + " ==========="
+    print(template % (iteration))
 
 def process_CLI():
     """Read values from cli and store in variables."""
