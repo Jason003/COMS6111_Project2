@@ -91,15 +91,13 @@ def process(items):
             print("skip " + item["link"])
             print ("--- TO HERE ---")
 
-    for r in raw_relations:
-        if float(r['confidence']) >= THRESHOLD:
-            EXTRACTED_TUPLES.append(r)
-
-    print ('High confidence = ' + str(len(EXTRACTED_TUPLES)))
-    print (str(EXTRACTED_TUPLES))
+    # Prune by confidence and duplicates
+    print ('Pruning relations below threshold...')
+    EXTRACTED_TUPLES = prune_relations(raw_relations)
+    print ('Number of tuples after pruning: ' + str(len(EXTRACTED_TUPLES)))
+    printAllRelations()
 
     # 4. find new tuples TODO
-
     if len(EXTRACTED_TUPLES) >= K:
         # 5. check if we have k tuples TODO
         pass
@@ -107,6 +105,21 @@ def process(items):
         # 6. otherwise requery
         requery()
     pass
+
+# return only high confidence, unique relations
+def prune_relations(relations):
+    uniques, pruned = set(), []
+    for r in relations:
+        if float(r['confidence']) >= THRESHOLD:
+            v1 = r["value1"]
+            v2 = r["value2"]
+            if v1 not in uniques and v2 not in uniques:
+                pruned.append(r)
+            uniques.add(v1)
+            uniques.add(v2)
+
+    # return sorted by confidence
+    return sorted(pruned, key=lambda k: k['confidence'], reverse=True)
 
 # TODO: Alex
 # Text-extraction
@@ -140,7 +153,7 @@ def extract_text(blob):
 
         return text
     else:
-        print('Cannot retrieve web page!  Skipping...')
+        print('Program could not extract text content from this web site; moving to the next one...')
         return None
 
 # helper method to print sentences from string
@@ -274,7 +287,7 @@ def print_parameters():
     print("Client key     = " + CLIENT_KEY)
     print("Engine key     = " + ENGINE_KEY)
     print("Relation       = " + RELATION)
-    print("Threshold      = %.3f" % (THRESHOLD))
+    print("Threshold      = %.2f" % (THRESHOLD))
     print("Query          = " + QUERY)
     print("# of Tuples    = %d" % (TARGET_TUPLE_AMT))
 
@@ -292,6 +305,16 @@ def printRelationObj(r):
     s += ' | EntityType2= ' + r['type2']
     s += ' | EntityValue2= ' + r['value2']
     print(s)
+
+def printAllRelations():
+    print('================== ALL RELATIONS =================')
+    for r in EXTRACTED_TUPLES:
+        s = ''
+        s += 'Relation Type: ' + RELATION
+        s += (' | Confidence= %.2f ' % float(r['confidence']))
+        s += '	 | Entity #1: ' + r['value1'] + '(' + r['type1'] + ')'
+        s += '            	 | Entity #2: ' + r['value2'] + '(' + r['type2'] + ')'
+        print(s)
 
 def process_CLI():
     """Read values from cli and store in variables."""
