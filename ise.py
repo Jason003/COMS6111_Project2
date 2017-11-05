@@ -50,27 +50,33 @@ def query():
 # TODO remove testing printouts
 def process(items):
     """Process each result from Google search."""
+    global EXTRACTED_TUPLES
+    raw_relations = EXTRACTED_TUPLES
     for item in items:
         # only process URLs once
         if item["link"] not in URL_HISTORY:
             print("Processing: " + item["link"])
 
             # Scrape site into blob
-            print('fetching blob...') # TESTING
+            # print('fetching blob...') # TESTING
             blob = fetch_site_blob(item["link"])
 
             # Extract meaningful text from the blob
-            print('extracting text...') # TESTING
+            # print('extracting text...') # TESTING
             text = extract_text(blob)
 
             if text is not None:
                 # turn the extracted text into phrases
-                print('finding query term occurrences...') # TESTING
+                # print('finding query term occurrences...') # TESTING
                 phrases = find_query_term_occurrences(text) # (pipeline 1)
 
                 # tag relations from the phrases
-                print('tagging relations...') # TESTING
-                tag_relations(phrases) # more TODO
+                # print('tagging relations...') # TESTING
+                relations = tag_relations(phrases) # more TODO
+                raw_relations = raw_relations + relations
+
+                # print outcome of this text
+                print ('Relations extracted from this website: ' + str(len(relations)) + ' (Overall:' + str(len(raw_relations)) + ')')
 
             # Been there, done that
             URL_HISTORY.append(item['link'])
@@ -79,7 +85,12 @@ def process(items):
             print("skip " + item["link"])
             print ("--- TO HERE ---")
 
-    # 3.d) filter_by_confidence TODO
+    for r in raw_relations:
+        if float(r['confidence']) >= THRESHOLD:
+            EXTRACTED_TUPLES.append(r)
+
+    print ('High confidence = ' + str(len(EXTRACTED_TUPLES)))
+    print (str(EXTRACTED_TUPLES))
 
     # 4. find new tuples TODO
 
@@ -185,7 +196,7 @@ def record_relation(sentence, relation, testing = False):
     for entity in relation.entities:
         index += 1
         if entity.type == 'O': # don't want these types
-            return
+            return False
         else:
             key = 'value' + str(index)
             rObj[key] = entity.value
@@ -202,6 +213,8 @@ def record_relation(sentence, relation, testing = False):
     printRelationObj(rObj)
     print ('============== END OF RELATION DESC ==============')
 
+    return rObj
+
 
 # Pipeline 2
 def tag_relations(phrases):
@@ -217,10 +230,14 @@ def tag_relations(phrases):
     doc = client.annotate(text=phrases, properties=properties)
 
     # Iterate through all relations, evaluate and print and record
-
+    relations = []
     for sentence in doc.sentences:
         for relation in sentence.relations:
-            record_relation(sentence, relation, testing=True)
+            r = record_relation(sentence, relation, testing=True)
+            if r is not False:
+                relations.append(r)
+
+    return relations
 
 # Scraper: returns document blob
 def fetch_site_blob(url):
