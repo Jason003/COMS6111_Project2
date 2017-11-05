@@ -30,6 +30,12 @@ EXTRACTED_TUPLES = []
 
 # List of relations we care about
 VALID_RELATIONS = ['Live_In','Located_In','OrgBased_In','Work_For']
+VALID_ENTITIES = {
+    'Live_In': [],
+    'Located_In': [],
+    'OrgBased_In': [],
+    'Work_For': ['PEOPLE','ORGANIZATION']
+}
 
 def requery():
     """Select unused, high-confidence, tuple then query and process."""
@@ -126,11 +132,11 @@ def extract_text(blob):
         chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
 
         # split sentences on periods that are not followed by an alphanumeric or another period
-        # add the period back to the end of each sentence and encode
+        # add the period back to the end of each sentence
         text = []
         for chunk in chunks:
             if chunk:
-                text.extend([(s + '.').encode('utf-8') for s in re.sub(r'(\.)([^a-zA-Z0-9\.])',r'\1 \2',chunk).split('. ')])
+                text.extend([(s + '.') for s in re.sub(r'(\.)([^a-zA-Z0-9\.])',r'\1 \2',chunk).split('. ')])
 
         return text
     else:
