@@ -269,7 +269,6 @@ def process_CLI():
 
 def get_relationship(i):
     """Return relation string for integer input."""
-    VALID_RELATIONS = ["Live_In", "Located_In", "OrgBased_In", "Work_For"]
     if i < len(VALID_RELATIONS):
         return VALID_RELATIONS[i-1]
     return VALID_RELATIONS[3]
