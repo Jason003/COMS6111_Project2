@@ -114,12 +114,12 @@ def extract_text(blob):
         # break multi-headlines into a single line
         chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
 
-        # Split each line on periods followed by a non-alpha-numeric, non-period character
-        # TODO: try inserting space after periods not followed by alpha-numeric character, then split on '. '
+        # split sentences on periods that are not followed by an alphanumeric or another period
+        # add the period back to the end of each sentence and encode
         text = []
         for chunk in chunks:
             if chunk:
-                text.extend(re.split('\.[^a-zA-Z\d.]',chunk))
+                text.extend([(s + '.').encode('utf-8') for s in re.sub(r'(\.)([^a-zA-Z0-9\.])',r'\1 \2',chunk).split('. ')])
 
         return text
     else:
@@ -163,11 +163,12 @@ def eval_sentence(s):
         sentence += ' ' + token.word
         if token.word.lower() in queryTokens:
             queryTokens.remove(token.word.lower())
-            if (len(queryTokens) == 0):
-                # printSentence(s) # TESTING
-                return sentence
-    # printSentence(s) # TESTING
-    return False
+    if (len(queryTokens) == 0):
+        # print('True: ' + sentence) # TESTING
+        return sentence
+    else:
+        # print('False: ' + sentence) # TESTING
+        return False
 
 # Records the relations
 # TODO: record in global params, change printouts to the format of example
@@ -190,6 +191,7 @@ def record_relation(sentence, relation, testing = False):
         s +=  '========== END OF RELATION DESC =========='
         print(s)
 
+# Pipeline 2
 def tag_relations(phrases):
     client = NLPCoreClient(STANFORD_CORENLP_PATH)
     properties = {
