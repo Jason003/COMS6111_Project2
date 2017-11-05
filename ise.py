@@ -172,7 +172,7 @@ def eval_sentence(s):
 # Records the relations
 # TODO: record in global params, change printouts to the format of example
 def record_relation(sentence, relation, testing = False):
-    s =  '======================\n'
+    s =  '=========== EXTRACTED RELATION ===========\n'
     s += 'Sentence:\n'
     s += '\t'
     for token in sentence.tokens:
@@ -187,6 +187,7 @@ def record_relation(sentence, relation, testing = False):
             s += '\t' + reltype + ' ; ' + relation.probabilities[reltype] + '\n'
             relfound = True
     if relfound and testing:
+        s +=  '========== END OF RELATION DESC =========='
         print(s)
 
 def tag_relations(phrases):
@@ -197,7 +198,7 @@ def tag_relations(phrases):
         "ner.useSUTime": "0"
     }
 
-    # annotate first pipeline
+    # annotate second pipeline
     properties["annotators"] = "tokenize,ssplit,pos,lemma,ner,parse,relation"
     doc = client.annotate(text=phrases, properties=properties)
 
