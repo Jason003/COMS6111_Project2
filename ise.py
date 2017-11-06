@@ -248,19 +248,7 @@ def record_relations(sentence):
             for token in sentence.tokens:
                 s += token.word + ' '
 
-            # Define relation object
-            index = 0
-            rObj = {}
-            for entity in relation.entities:
-                index += 1
-                key = 'value' + str(index)
-                rObj[key] = entity.value
-                key = 'type' + str(index)
-                rObj[key] = entity.type
-
-            rObj['confidence'] = relation.probabilities[RELATION]
-
-            # returned_relations.append(rObj)
+            # Record sentence and relation
             returned_relations.append({'s':s,'r':relation})
 
     # TODO De-duplicate relations
@@ -336,7 +324,7 @@ def printIterationHeader():
 def printRelations(relations):
     for r in relations:
         print ('=============== EXTRACTED RELATION ===============')
-        print ('Sentence: ' + r['s'][:-1].strip() + '.')
+        print ('Sentence: ' + r['s'].strip())
         s = ''
         s += 'RelationType: ' + RELATION
         s += (' | Confidence= %f ' % float(r['r'].probabilities[RELATION]))
