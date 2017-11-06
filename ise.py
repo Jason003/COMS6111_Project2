@@ -123,13 +123,16 @@ def process(items):
 def prune_relations(relations):
     uniques, pruned = set(), []
     for r in relations:
-        if float(r['confidence']) >= THRESHOLD:
-            v1 = r["value1"]
-            v2 = r["value2"]
-            if v1 not in uniques and v2 not in uniques:
+        if float(r['r'].probabilities[RELATION]) >= THRESHOLD:
+            values = []
+            for entity in r['r'].entities:
+                values.append(entity.value)
+            values = values.sort()
+
+            if values not in uniques:
                 pruned.append(r)
-            uniques.add(v1)
-            uniques.add(v2)
+
+            uniques.add(values)
 
     # return sorted by confidence
     return sorted(pruned, key=lambda k: k['confidence'], reverse=True)
