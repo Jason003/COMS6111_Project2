@@ -5,7 +5,7 @@ text = ["Bill Gates works at Microsoft."," Sergei works at Google."]
 #path to corenlp
 client = NLPCoreClient('stanford-corenlp-full-2017-06-09')
 properties = {
-	"annotators": "tokenize,ssplit,pos,lemma,ner",
+	"annotators": "tokenize,ssplit,pos,lemma,ner,parse,relation",
 	"parse.model": "edu/stanford/nlp/models/lexparser/englishPCFG.ser.gz",
 	"ner.useSUTime": "0"
 	}

@@ -39,10 +39,20 @@ VALID_ENTITIES = {
 
 def requery():
     """Select unused, high-confidence, tuple then query and process."""
-    # TODO
-    # check if done
-    # otherwise, find new query term
-    pass
+    global QUERY
+    new_query = ''
+    for r in EXTRACTED_TUPLES:
+        temp = r['value1'] + ' ' + r['value2']
+        if temp not in QUERY_HISTORY:
+            new_query = temp
+            break
+
+    # out of new terms to query
+    if new_query == '':
+        return
+    print (new_query)
+    QUERY = new_query
+    query()
 
 def query():
     """Send request to Google Custom Search endpoint."""
@@ -87,9 +97,7 @@ def process(items):
             # Been there, done that
             URL_HISTORY.append(item['link'])
         else:
-            print("--- REMOVE FROM HERE ---")
-            print("skip " + item["link"])
-            print ("--- TO HERE ---")
+            print('Program already processed text content from this web site; moving to the next one...')
 
     # Prune by confidence and duplicates
     print ('Pruning relations below threshold...')
@@ -99,7 +107,7 @@ def process(items):
 
     # 4. find new tuples TODO
     if len(EXTRACTED_TUPLES) >= TARGET_TUPLE_AMT:
-        print ('Program reached ' + str(len(EXTRACTED_TUPLES)) + ' number of tuples. Shutting down...')
+        return
     else:
         requery()
     pass
@@ -173,6 +181,12 @@ def find_query_term_occurrences(text):
     # annotate first pipeline
     properties["annotators"] = "tokenize,ssplit,pos,lemma,ner"
     doc = client.annotate(text=text, properties=properties)
+
+    # for sentence in doc.sentences:
+    #     if len(sentence.entities) == 0:
+    #         print('NO entities!!!!')
+    #     for entity in sentence.entities:
+    #         print ('type:' + entity.type)
 
     # find sentences with matching tokens from query
     eligiblePhrases = []
@@ -277,6 +291,7 @@ def main():
     """Main entry point for the script."""
     process_CLI()
     query()
+    print ('Program reached ' + str(len(EXTRACTED_TUPLES)) + ' number of tuples. Shutting down...')
 
 def print_parameters():
     print("Parameters:")
@@ -288,7 +303,7 @@ def print_parameters():
     print("# of Tuples    = %d" % (TARGET_TUPLE_AMT))
 
 def printIterationHeader():
-    iteration = (len(URL_HISTORY) + 1)
+    iteration = (len(QUERY_HISTORY) + 1)
     template = "=========== Iteration: %d - Query: " + QUERY + " ==========="
     print(template % (iteration))
 
