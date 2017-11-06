@@ -30,11 +30,11 @@ EXTRACTED_TUPLES = []
 
 # List of relations we care about
 VALID_RELATIONS = ['Live_In','Located_In','OrgBased_In','Work_For']
-VALID_ENTITIES = {
-    'Live_In': [],
-    'Located_In': [],
-    'OrgBased_In': [],
-    'Work_For': ['PEOPLE','ORGANIZATION']
+REQUIRED_NERS = {
+    'Live_In': ['PERSON','LOCATION'],
+    'Located_In': ['LOCATION','LOCATION'],
+    'OrgBased_In': ['ORGANIZATION','LOCATION'],
+    'Work_For': ['PERSON','ORGANIZATION']
 }
 
 def requery():
@@ -71,6 +71,7 @@ def process(items):
     for item in items:
         # only process URLs once
         if item["link"] not in URL_HISTORY:
+        # if item['link'] == 'https://en.wikipedia.org/wiki/Bill_Gates': # TESTING
             print("Processing: " + item["link"])
 
             # Scrape site into blob
@@ -197,24 +198,36 @@ def find_query_term_occurrences(text):
 
     return eligiblePhrases
 
-# Looks for sentences which contain all of the query terms
+# Filter sentences after pipeline 1:
+#   Only returns sentences if they contain each of the required 'ners'
 def eval_sentence(s):
     sentence = ''
-    queryTokens = QUERY.split(' ')
+    ners_needed = REQUIRED_NERS[RELATION]
+    ners_found = [False] * len(ners_needed)
+
+    # For every word (token) in sentence
     for token in s.tokens:
+
+        # Record valid ners as found
+        for i in range(len(ners_needed)):
+            if ners_needed[i] == token.ner and not ners_found[i]:
+                ners_found[i] = True
+                # break in case two of same ners needed (like for 'Located_In')
+                break
+
+        # Record word
         sentence += ' ' + token.word
-        if token.word.lower() in queryTokens:
-            queryTokens.remove(token.word.lower())
-    if (len(queryTokens) == 0):
-        # print('True: ' + sentence) # TESTING
+
+    if all(ners_found)==True:
+        # print('True ' + s.id + ': ' + sentence) # TESTING
         return sentence
     else:
-        # print('False: ' + sentence) # TESTING
+        # print('False ' + s.id + ': ' + sentence) # TESTING
         return False
 
 # Records the relations
 # TODO: record in global params, change printouts to the format of example
-def record_relation(sentence, relation, testing = False):
+def record_relation(sentence, relation):
 
     # Join words into full sentence
     s = ''
@@ -264,7 +277,7 @@ def tag_relations(phrases):
     relations = []
     for sentence in doc.sentences:
         for relation in sentence.relations:
-            r = record_relation(sentence, relation, testing=True)
+            r = record_relation(sentence, relation)
             if r is not False:
                 relations.append(r)
 
