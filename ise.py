@@ -36,6 +36,12 @@ REQUIRED_NERS = {
     'OrgBased_In': ['ORGANIZATION','LOCATION'],
     'Work_For': ['PERSON','ORGANIZATION']
 }
+REQUIRED_RELATIONS = {
+    'Live_In': ['PEOPLE','LOCATION'],
+    'Located_In': ['LOCATION','LOCATION'],
+    'OrgBased_In': ['ORGANIZATION','LOCATION'],
+    'Work_For': ['PEOPLE','ORGANIZATION']
+}
 
 def requery():
     """Select unused, high-confidence, tuple then query and process."""
@@ -128,13 +134,11 @@ def prune_relations(relations):
     # return sorted by confidence
     return sorted(pruned, key=lambda k: k['confidence'], reverse=True)
 
-# TODO: Alex
 # Text-extraction
 def extract_text(blob):
     """Separate text from markdown."""
     html = BeautifulSoup(blob, "html.parser")
 
-    # TODO there are probably opportunites to improve the code below
     body = html.find('body')
 
     if body is not None:
@@ -152,11 +156,11 @@ def extract_text(blob):
         chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
 
         # split sentences on periods that are not followed by an alphanumeric or another period
-        # add the period back to the end of each sentence
+        # strip spaces and certain symbols, add the period back to the end of each sentence
         text = []
         for chunk in chunks:
             if chunk:
-                text.extend([(s + '.') for s in re.sub(r'(\.)([^a-zA-Z0-9\.])',r'\1 \2',chunk).split('. ')])
+                text.extend([(re.sub('[ ^`]*$','',re.sub('^[ ^`]*','',s)) + '.') for s in re.sub(r'(\.)([^a-zA-Z0-9\.])',r'\1 \2',chunk).split('. ')])
 
         return text
     else:
@@ -202,15 +206,14 @@ def find_query_term_occurrences(text):
 #   Only returns sentences if they contain each of the required 'ners'
 def eval_sentence(s):
     sentence = ''
-    ners_needed = REQUIRED_NERS[RELATION]
-    ners_found = [False] * len(ners_needed)
+    ners_found = [False] * len(REQUIRED_NERS[RELATION])
 
     # For every word (token) in sentence
     for token in s.tokens:
 
         # Record valid ners as found
-        for i in range(len(ners_needed)):
-            if ners_needed[i] == token.ner and not ners_found[i]:
+        for i in range(len(REQUIRED_NERS[RELATION])):
+            if REQUIRED_NERS[RELATION][i] == token.ner and not ners_found[i]:
                 ners_found[i] = True
                 # break in case two of same ners needed (like for 'Located_In')
                 break
@@ -218,46 +221,52 @@ def eval_sentence(s):
         # Record word
         sentence += ' ' + token.word
 
-    if all(ners_found)==True:
-        # print('True ' + s.id + ': ' + sentence) # TESTING
+    if all(ners_found):
+        # print('\t' + s.id + ': ' + sentence) # TESTING
         return sentence
     else:
-        # print('False ' + s.id + ': ' + sentence) # TESTING
         return False
 
 # Records the relations
-# TODO: record in global params, change printouts to the format of example
-def record_relation(sentence, relation):
+# TODO: don't record the same relation multiple times, take the higher confidence (this is pretty tricky)
+def record_relations(sentence):
+    returned_relations = []
 
-    # Join words into full sentence
-    s = ''
-    for token in sentence.tokens:
-        s += token.word + ' '
+    for relation in sentence.relations:
+        # is this found relation valid for the chosen relation?
+        ners_found = [False] * len(REQUIRED_RELATIONS[RELATION])
+        for entity in relation.entities:
+            for i in range(len(REQUIRED_RELATIONS[RELATION])):
+                if REQUIRED_RELATIONS[RELATION][i] == entity.type and not ners_found[i]:
+                    ners_found[i] = True
+                    break
 
-    # Define relation
-    index = 0
-    rObj = {}
-    for entity in relation.entities:
-        index += 1
-        if entity.type == 'O': # don't want these types
-            return False
-        else:
-            key = 'value' + str(index)
-            rObj[key] = entity.value
-            key = 'type' + str(index)
-            rObj[key] = entity.type
+        # This is the correct relation type!
+        if all(ners_found):
+            # Join words into full sentence
+            s = ''
+            for token in sentence.tokens:
+                s += token.word + ' '
 
-    for r in VALID_RELATIONS:
-        if r in relation.probabilities and r == RELATION:
-            rObj['confidence'] = relation.probabilities[r]
+            # Define relation object
+            index = 0
+            rObj = {}
+            for entity in relation.entities:
+                index += 1
+                key = 'value' + str(index)
+                rObj[key] = entity.value
+                key = 'type' + str(index)
+                rObj[key] = entity.type
 
-    # Print relation record
-    print ('=============== EXTRACTED RELATION ===============')
-    print ('Sentence: ' + s)
-    printRelationObj(rObj)
-    print ('============== END OF RELATION DESC ==============')
+            rObj['confidence'] = relation.probabilities[RELATION]
 
-    return rObj
+            returned_relations.append(rObj)
+
+    # print found valid relations
+    for r in returned_relations:
+        printRelation(s, r)
+
+    return returned_relations
 
 
 # Pipeline 2
@@ -276,10 +285,12 @@ def tag_relations(phrases):
     # Iterate through all relations, evaluate and print and record
     relations = []
     for sentence in doc.sentences:
-        for relation in sentence.relations:
-            r = record_relation(sentence, relation)
-            if r is not False:
-                relations.append(r)
+        relations.extend(record_relations(sentence))
+
+        # for relation in sentence.relations:
+        #     r = record_relation(sentence, relation)
+        #     if r is not False:
+        #         relations.append(r)
 
     return relations
 
@@ -320,7 +331,9 @@ def printIterationHeader():
     template = "=========== Iteration: %d - Query: " + QUERY + " ==========="
     print(template % (iteration))
 
-def printRelationObj(r):
+def printRelation(sentence,r):
+    print ('=============== EXTRACTED RELATION ===============')
+    print ('Sentence: ' + sentence[:-1].strip() + '.')
     s = ''
     s += 'RelationType: ' + RELATION
     s += (' | Confidence= %f ' % float(r['confidence']))
@@ -328,7 +341,8 @@ def printRelationObj(r):
     s += ' | EntityValue1= ' + r['value1']
     s += ' | EntityType2= ' + r['type2']
     s += ' | EntityValue2= ' + r['value2']
-    print(s)
+    print (s)
+    print ('============== END OF RELATION DESC ==============')
 
 def printAllRelations():
     print('================== ALL RELATIONS =================')
