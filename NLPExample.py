@@ -13,7 +13,7 @@ doc = client.annotate(text=text, properties=properties)
 for sentence in doc.sentences:
     print ("NEW SENT")
     for token in sentence.tokens:
-        print (token.ner +' ')
+        print (token.word + ' - ' + token.ner +' ')
     # for dependency in sentence.dependencies:
     #     print ("dependency = " + dependency.type)
     for entity in sentence.entities:
