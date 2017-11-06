@@ -90,7 +90,7 @@ class Token:
 		return reparsed.toprettyxml(newl='')
 
 	def __str__(self):
-		st = "Token with id: {} representing word: {}. ".format(self.id, self.word)
+		st = "Token with id: {} representing word: {}.".format(self.id, self.word)
 		return st
 
 
