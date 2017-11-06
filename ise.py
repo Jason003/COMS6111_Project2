@@ -167,13 +167,6 @@ def extract_text(blob):
         print('Program could not extract text content from this web site; moving to the next one...')
         return None
 
-# helper method to print sentences from string
-def printSentence(s):
-    str = ''
-    for tkn in s.tokens:
-        str += tkn.word + ' '
-    print(str[:-1])
-
 def find_query_term_occurrences(text):
     """Annotate text with the Stanford CoreNLP."""
     client = NLPCoreClient(STANFORD_CORENLP_PATH)
@@ -186,12 +179,6 @@ def find_query_term_occurrences(text):
     # annotate first pipeline
     properties["annotators"] = "tokenize,ssplit,pos,lemma,ner"
     doc = client.annotate(text=text, properties=properties)
-
-    # for sentence in doc.sentences:
-    #     if len(sentence.entities) == 0:
-    #         print('NO entities!!!!')
-    #     for entity in sentence.entities:
-    #         print ('type:' + entity.type)
 
     # find sentences with matching tokens from query
     eligiblePhrases = []
@@ -277,11 +264,6 @@ def tag_relations(phrases):
     for sentence in doc.sentences:
         relations.extend(record_relations(sentence))
 
-        # for relation in sentence.relations:
-        #     r = record_relation(sentence, relation)
-        #     if r is not False:
-        #         relations.append(r)
-
     return relations
 
 # Scraper: returns document blob
@@ -329,8 +311,8 @@ def printRelations(relations):
         s += 'RelationType: ' + RELATION
         s += (' | Confidence= %f ' % float(r['r'].probabilities[RELATION]))
         for e_index in range(len(r['r'].entities)):
-            s += ' | EntityType' + str(e_index) + '= ' + r['r'].entities[e_index].type
-            s += ' | EntityValue' + str(e_index) + '= ' + r['r'].entities[e_index].value
+            s += ' | EntityType' + str(e_index+1) + '= ' + r['r'].entities[e_index].type
+            s += ' | EntityValue' + str(e_index+1) + '= ' + r['r'].entities[e_index].value
         print (s)
         print ('============== END OF RELATION DESC ==============')
 
@@ -339,9 +321,9 @@ def printAllRelations():
     for r in EXTRACTED_TUPLES:
         s = ''
         s += 'Relation Type: ' + RELATION
-        s += (' | Confidence= %.2f ' % float(r['confidence']))
-        s += '	 | Entity #1: ' + r['value1'] + '(' + r['type1'] + ')'
-        s += '            	 | Entity #2: ' + r['value2'] + '(' + r['type2'] + ')'
+        s += (' | Confidence= %.2f ' % float(r.probabilities[RELATION]))
+        for e_index in rrange(len(r.entities)):
+            s += '	 | Entity #' + str(e_index+1) + ': ' + r.entities[e_index].value + '(' + r.entities[e_index].type + ')'
         print(s)
 
 def process_CLI():
