@@ -16,13 +16,13 @@ RELATION = "Work_For"
 THRESHOLD = 0.35
 QUERY = "bill gates microsoft"
 TARGET_TUPLE_AMT = 3
-K = 10
 
 # Path to the client
 STANFORD_CORENLP_PATH = "stanford-corenlp-full-2017-06-09"
 
 # Google API query template
 URL = Template("https://www.googleapis.com/customsearch/v1?key=$client_key&cx=$engine_key&q=$query")
+QUERY_HISTORY = []
 URL_HISTORY = []
 
 # List of extracted tuples
@@ -47,9 +47,9 @@ def requery():
 def query():
     """Send request to Google Custom Search endpoint."""
     printIterationHeader()
+    QUERY_HISTORY.append(QUERY) # Been there, done that
     url = URL.substitute(client_key = CLIENT_KEY, engine_key = ENGINE_KEY, query = QUERY)
     response = requests.get(url)
-    # print(response.json()) # TESTING
     items = response.json()["items"]
     process(items)
 
@@ -98,11 +98,9 @@ def process(items):
     printAllRelations()
 
     # 4. find new tuples TODO
-    if len(EXTRACTED_TUPLES) >= K:
-        # 5. check if we have k tuples TODO
-        pass
+    if len(EXTRACTED_TUPLES) >= TARGET_TUPLE_AMT:
+        print ('Program reached ' + str(len(EXTRACTED_TUPLES)) + ' number of tuples. Shutting down...')
     else:
-        # 6. otherwise requery
         requery()
     pass
 
@@ -279,8 +277,6 @@ def main():
     """Main entry point for the script."""
     process_CLI()
     query()
-
-    print("Finished.")
 
 def print_parameters():
     print("Parameters:")
