@@ -245,7 +245,6 @@ def record_relations(sentence):
 
     return returned_relations
 
-
 # Pipeline 2
 def tag_relations(phrases):
     client = NLPCoreClient(STANFORD_CORENLP_PATH)
@@ -321,9 +320,9 @@ def printAllRelations():
     for r in EXTRACTED_TUPLES:
         s = ''
         s += 'Relation Type: ' + RELATION
-        s += (' | Confidence= %.2f ' % float(r.probabilities[RELATION]))
-        for e_index in rrange(len(r.entities)):
-            s += '	 | Entity #' + str(e_index+1) + ': ' + r.entities[e_index].value + '(' + r.entities[e_index].type + ')'
+        s += (' | Confidence= %.2f ' % float(r['s'].probabilities[RELATION]))
+        for e_index in rrange(len(r['s'].entities)):
+            s += '	 | Entity #' + str(e_index+1) + ': ' + r['s'].entities[e_index].value + '(' + r['s'].entities[e_index].type + ')'
         print(s)
 
 def process_CLI():
