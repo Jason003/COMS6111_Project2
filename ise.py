@@ -260,11 +260,13 @@ def record_relations(sentence):
 
             rObj['confidence'] = relation.probabilities[RELATION]
 
-            returned_relations.append(rObj)
+            # returned_relations.append(rObj)
+            returned_relations.append({'s':s,'r':relation})
+
+    # TODO De-duplicate relations
 
     # print found valid relations
-    for r in returned_relations:
-        printRelation(s, r)
+    printRelations(returned_relations)
 
     return returned_relations
 
@@ -331,18 +333,18 @@ def printIterationHeader():
     template = "=========== Iteration: %d - Query: " + QUERY + " ==========="
     print(template % (iteration))
 
-def printRelation(sentence,r):
-    print ('=============== EXTRACTED RELATION ===============')
-    print ('Sentence: ' + sentence[:-1].strip() + '.')
-    s = ''
-    s += 'RelationType: ' + RELATION
-    s += (' | Confidence= %f ' % float(r['confidence']))
-    s += ' | EntityType1= ' + r['type1']
-    s += ' | EntityValue1= ' + r['value1']
-    s += ' | EntityType2= ' + r['type2']
-    s += ' | EntityValue2= ' + r['value2']
-    print (s)
-    print ('============== END OF RELATION DESC ==============')
+def printRelations(relations):
+    for r in relations:
+        print ('=============== EXTRACTED RELATION ===============')
+        print ('Sentence: ' + r['s'][:-1].strip() + '.')
+        s = ''
+        s += 'RelationType: ' + RELATION
+        s += (' | Confidence= %f ' % float(r['r'].probabilities[RELATION]))
+        for e_index in range(len(r['r'].entities)):
+            s += ' | EntityType' + str(e_index) + '= ' + r['r'].entities[e_index].type
+            s += ' | EntityValue' + str(e_index) + '= ' + r['r'].entities[e_index].value
+        print (s)
+        print ('============== END OF RELATION DESC ==============')
 
 def printAllRelations():
     print('================== ALL RELATIONS =================')
