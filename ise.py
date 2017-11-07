@@ -92,7 +92,7 @@ def process(items):
                 phrases = find_query_term_occurrences(text) # (pipeline 1)
 
                 # tag relations from the phrases
-                relations = tag_relations(phrases)
+                relations = tag_relations(phrases) # (pipeline 2)
                 raw_relations = raw_relations + relations
 
                 # print outcome of this text
