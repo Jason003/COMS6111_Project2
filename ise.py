@@ -121,27 +121,34 @@ def process(items):
 
 # return only high confidence, unique relations
 def prune_relations(relations):
-    uniqueEntityPairs, pruned = set(), {}
-    for r in relations:
-        confidence = float(r['r'].probabilities[RELATION])
-        # make sure its a high confidence entity
-        if  confidence >= THRESHOLD:
-            # create entity pairs
-            entities = ()
-            for entity in r['r'].entities:
-                entities += (entity.value, entity.type)
+    pruned = {}
+    unique = set()
 
-            # make sure there are enough entities
-            if len(entities) == 4:
-                if entities not in uniqueEntityPairs:
-                    # new, simply add new tuples
+    for r in relations:
+        # check confidence before wasting any more time on this relation
+        confidence = float(r['r'].probabilities[RELATION])
+        if  confidence >= THRESHOLD:
+
+            # make sure there are 2 entities before wasting any more time on this relation
+            if len(r['r'].entities) == 2:
+
+                # normalize order
+                entities = ()
+                if r['r'].entities[0].type == REQUIRED_RELATIONS[RELATION][0]:
+                    entities = (r['r'].entities[0].value, r['r'].entities[0].type, r['r'].entities[1].value, r['r'].entities[1].type)
+                else:
+                    entities = (r['r'].entities[1].value, r['r'].entities[1].type, r['r'].entities[0].value, r['r'].entities[0].type)
+
+                if entities not in unique:
+                    # new, simply add
                     pruned[entities] = confidence
                 else:
                     # repeat, choose higher confidence
                     if confidence > pruned[entities]:
                         pruned[entities] = confidence
 
-            uniqueEntityPairs.add(entities)
+                unique.add(entities)
+
 
     # return sorted by confidence
     sortedPruned = []
@@ -341,10 +348,17 @@ def printAllRelations():
     for r in EXTRACTED_TUPLES:
         s = ''
         s += 'Relation Type: ' + RELATION
-        s += (' | Confidence= %.2f ' % float(r['s'].probabilities[RELATION]))
-        for e_index in rrange(len(r['s'].entities)):
-            s += '	 | Entity #' + str(e_index+1) + ': ' + r['s'].entities[e_index].value + '(' + r['s'].entities[e_index].type + ')'
+        s += (' | Confidence= %.2f ' % float(r['confidence']))
+        s += '	 | Entity #1: ' + r['value1'] + '(' + r['type1'] + ')'
+        s += '            	 | Entity #2: ' + r['value2'] + '(' + r['type2'] + ')'
         print(s)
+    # for r in EXTRACTED_TUPLES:
+    #     s = ''
+    #     s += 'Relation Type: ' + RELATION
+    #     s += (' | Confidence= %.2f ' % float(r['s'].probabilities[RELATION]))
+    #     for e_index in rrange(len(r['s'].entities)):
+    #         s += '	 | Entity #' + str(e_index+1) + ': ' + r['s'].entities[e_index].value + '(' + r['s'].entities[e_index].type + ')'
+    #     print(s)
 
 def process_CLI():
     """Read values from cli and store in variables."""
