@@ -121,21 +121,39 @@ def process(items):
 
 # return only high confidence, unique relations
 def prune_relations(relations):
-    uniques, pruned = set(), []
+    uniqueEntityPairs, pruned = set(), {}
     for r in relations:
-        if float(r['r'].probabilities[RELATION]) >= THRESHOLD:
-            values = []
+        confidence = float(r['r'].probabilities[RELATION])
+        # make sure its a high confidence entity
+        if  confidence >= THRESHOLD:
+            # create entity pairs
+            entities = ()
             for entity in r['r'].entities:
-                values.append(entity.value)
-            values = values.sort()
+                entities += (entity.value, entity.type)
 
-            if values not in uniques:
-                pruned.append(r)
+            # make sure there are enough entities
+            if len(entities) == 4:
+                if entities not in uniqueEntityPairs:
+                    # new, simply add new tuples
+                    pruned[entities] = confidence
+                else:
+                    # repeat, choose higher confidence
+                    if confidence > pruned[entities]:
+                        pruned[entities] = confidence
 
-            uniques.add(values)
+            uniqueEntityPairs.add(entities)
 
     # return sorted by confidence
-    return sorted(pruned, key=lambda k: k['confidence'], reverse=True)
+    sortedPruned = []
+    for k, v in sorted(pruned.items(), key=lambda kv: kv[1], reverse=True):
+        sortedPruned.append({
+            'value1': k[0],
+            'type1': k[1],
+            'value2': k[2],
+            'type2': k[3],
+            'confidence': v
+        })
+    return sortedPruned
 
 # Text-extraction
 def extract_text(blob):
