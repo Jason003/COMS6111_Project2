@@ -15,7 +15,7 @@ ENGINE_KEY = "010829534362544137563:ndji7c0ivva"
 RELATION = "Work_For"
 THRESHOLD = 0.35
 QUERY = "bill gates microsoft"
-TARGET_TUPLE_AMT = 3
+TARGET_TUPLE_AMT = 10
 
 # Path to the client
 STANFORD_CORENLP_PATH = "stanford-corenlp-full-2017-06-09"
@@ -25,11 +25,13 @@ URL = Template("https://www.googleapis.com/customsearch/v1?key=$client_key&cx=$e
 QUERY_HISTORY = []
 URL_HISTORY = []
 
-# List of extracted tuples
+# Maintain a global list of extracted tuples
 EXTRACTED_TUPLES = []
 
-# List of relations we care about
+# Relations we care about
 VALID_RELATIONS = ['Live_In','Located_In','OrgBased_In','Work_For']
+
+# Relation types we care about
 REQUIRED_NERS = {
     'Live_In': ['PERSON','LOCATION'],
     'Located_In': ['LOCATION','LOCATION'],
@@ -69,7 +71,7 @@ def query():
     items = response.json()["items"]
     process(items)
 
-# TODO remove testing printouts
+# Contains each iteration
 def process(items):
     """Process each result from Google search."""
     global EXTRACTED_TUPLES
@@ -77,25 +79,20 @@ def process(items):
     for item in items:
         # only process URLs once
         if item["link"] not in URL_HISTORY:
-        # if item['link'] == 'https://en.wikipedia.org/wiki/Bill_Gates': # TESTING
             print("Processing: " + item["link"])
 
             # Scrape site into blob
-            # print('fetching blob...') # TESTING
             blob = fetch_site_blob(item["link"])
 
             # Extract meaningful text from the blob
-            # print('extracting text...') # TESTING
             text = extract_text(blob)
 
             if text is not None:
                 # turn the extracted text into phrases
-                # print('finding query term occurrences...') # TESTING
                 phrases = find_query_term_occurrences(text) # (pipeline 1)
 
                 # tag relations from the phrases
-                # print('tagging relations...') # TESTING
-                relations = tag_relations(phrases) # more TODO
+                relations = tag_relations(phrases)
                 raw_relations = raw_relations + relations
 
                 # print outcome of this text
@@ -112,12 +109,11 @@ def process(items):
     print ('Number of tuples after pruning: ' + str(len(EXTRACTED_TUPLES)))
     printAllRelations()
 
-    # 4. find new tuples TODO
-    if len(EXTRACTED_TUPLES) >= TARGET_TUPLE_AMT:
+    # Find new tuples and requery if we haven't found 0 or K+
+    if len(EXTRACTED_TUPLES) >= TARGET_TUPLE_AMT or len(EXTRACTED_TUPLES) == 0:
         return
     else:
         requery()
-    pass
 
 # return only high confidence, unique relations
 def prune_relations(relations):
@@ -148,7 +144,6 @@ def prune_relations(relations):
                         pruned[entities] = r
 
                 unique.add(entities)
-
 
     # return sorted by confidence
     sorted_x = sorted(pruned.items(), key=lambda v:float(v[1]['r'].probabilities[RELATION]), reverse=True)
@@ -234,7 +229,6 @@ def eval_sentence(s):
         sentence += ' ' + token.word
 
     if all(ners_found):
-        # print('\t' + s.id + ': ' + sentence) # TESTING
         return sentence
     else:
         return False
@@ -321,13 +315,6 @@ def fetch_site_blob(url):
     doc = requests.get(url, timeout=10)
     return doc.text
 
-def identify_quality_tuples(tuples):
-    """Identify new tuples with confidence at least equal to the requested threshold."""
-    for t in tuples:
-        print (t)
-    # check if they've already been identified
-    pass
-
 def progress_check():
     """Done if k matches."""
     pass
@@ -401,6 +388,7 @@ def get_relationship(i):
     """Return relation string for integer input."""
     if i < len(VALID_RELATIONS):
         return VALID_RELATIONS[i-1]
+    print('Invalid relation!  Defaulting to Work_For...')
     return VALID_RELATIONS[3]
 
 if __name__ == '__main__':
