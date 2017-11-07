@@ -48,9 +48,9 @@ def requery():
     global QUERY
     new_query = ''
     for r in EXTRACTED_TUPLES:
-        temp = r['value1'] + ' ' + r['value2']
-        if temp not in QUERY_HISTORY:
-            new_query = temp
+        q = r['r'].entities[0].value + ' ' + r['r'].entities[1].value
+        if q not in QUERY_HISTORY:
+            new_query = q
             break
 
     # out of new terms to query
@@ -141,26 +141,23 @@ def prune_relations(relations):
 
                 if entities not in unique:
                     # new, simply add
-                    pruned[entities] = confidence
+                    pruned[entities] = r
                 else:
                     # repeat, choose higher confidence
-                    if confidence > pruned[entities]:
-                        pruned[entities] = confidence
+                    if confidence > float(pruned[entities]['r'].probabilities[RELATION]):
+                        pruned[entities] = r
 
                 unique.add(entities)
 
 
     # return sorted by confidence
-    sortedPruned = []
-    for k, v in sorted(pruned.items(), key=lambda kv: kv[1], reverse=True):
-        sortedPruned.append({
-            'value1': k[0],
-            'type1': k[1],
-            'value2': k[2],
-            'type2': k[3],
-            'confidence': v
-        })
-    return sortedPruned
+    sorted_x = sorted(pruned.items(), key=lambda v:float(v[1]['r'].probabilities[RELATION]), reverse=True)
+
+    # drop keys and just return relations
+    sortedRelations = []
+    for s in sorted_x:
+        sortedRelations.append(s[1])
+    return sortedRelations
 
 # Text-extraction
 def extract_text(blob):
@@ -348,17 +345,10 @@ def printAllRelations():
     for r in EXTRACTED_TUPLES:
         s = ''
         s += 'Relation Type: ' + RELATION
-        s += (' | Confidence= %.2f ' % float(r['confidence']))
-        s += '	 | Entity #1: ' + r['value1'] + '(' + r['type1'] + ')'
-        s += '            	 | Entity #2: ' + r['value2'] + '(' + r['type2'] + ')'
+        s += (' | Confidence= %.2f ' % float(r['r'].probabilities[RELATION]))
+        for e_index in range(len(r['r'].entities)):
+            s += '	 | Entity #' + str(e_index+1) + ': ' + r['r'].entities[e_index].value + '(' + r['r'].entities[e_index].type + ')'
         print(s)
-    # for r in EXTRACTED_TUPLES:
-    #     s = ''
-    #     s += 'Relation Type: ' + RELATION
-    #     s += (' | Confidence= %.2f ' % float(r['s'].probabilities[RELATION]))
-    #     for e_index in rrange(len(r['s'].entities)):
-    #         s += '	 | Entity #' + str(e_index+1) + ': ' + r['s'].entities[e_index].value + '(' + r['s'].entities[e_index].type + ')'
-    #     print(s)
 
 def process_CLI():
     """Read values from cli and store in variables."""
