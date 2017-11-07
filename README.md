@@ -15,6 +15,20 @@
 * Stanford-corenlp-full-2017 on the same path as `ise.py`
 * Python 3+
 
+## Connecting to the Virtual Machine
+
+External IP: 35.185.57.0 <br/>
+Username: project2 <br/>
+password: passw0rd <br/>
+
+ssh project2@35.185.57.0 <br/>
+passw0rd
+
+## Running the Code
+
+cd COMS6111_Project2
+python ise.py AIzaSyCATX_cG2DgsJjFtCdgcThfR2xaH7MSMl0 010829534362544137563:ndji7c0ivva \<relation\> \<threshold\> \<query\> \<K\>
+
 ## How to Run
 
 TODO
