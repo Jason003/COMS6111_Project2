@@ -240,30 +240,55 @@ def eval_sentence(s):
         return False
 
 # Records the relations
-# TODO: don't record the same relation multiple times, take the higher confidence (this is pretty tricky)
 def record_relations(sentence):
     returned_relations = []
 
     for relation in sentence.relations:
-        # is this found relation valid for the chosen relation?
+
+        # are the found relation types valid for the chosen relation?  Also record entities
         ners_found = [False] * len(REQUIRED_RELATIONS[RELATION])
+        entities = []
         for entity in relation.entities:
+            entities.append(entity.value)
             for i in range(len(REQUIRED_RELATIONS[RELATION])):
                 if REQUIRED_RELATIONS[RELATION][i] == entity.type and not ners_found[i]:
                     ners_found[i] = True
                     break
 
-        # This is the correct relation type!
-        if all(ners_found):
-            # Join words into full sentence
-            s = ''
-            for token in sentence.tokens:
-                s += token.word + ' '
+        if not all(ners_found):
+            continue
 
-            # Record sentence and relation
-            returned_relations.append({'s':s,'r':relation})
+        # Get key of the max-confidence relation types (probabilities returned in a dict)
+        max_confidence_relations = [k for k,v in relation.probabilities.items() if v == max(relation.probabilities.values())]
 
-    # TODO De-duplicate relations
+        if RELATION not in max_confidence_relations:
+            continue
+
+        # Have we seen this relation yet?
+        seen_better_relation = False
+        for r_r in returned_relations:
+            returned_entities = []
+            for entity in r_r['r'].entities:
+                returned_entities.append(entity.value)
+            if returned_entities.sort() == entities.sort():
+                if r_r['r'].probabilities[RELATION] >= relation.probabilities[RELATION]:
+                    seen_better_relation = True
+                else:
+                    returned_relations.remove(r_r)
+
+        if seen_better_relation:
+            continue
+
+        # ========================================================
+        # If we make it this far, we want to record this relation!
+
+        # Join words into full sentence
+        s = ''
+        for token in sentence.tokens:
+            s += token.word + ' '
+
+        # Record sentence and relation
+        returned_relations.append({'s':s,'r':relation})
 
     # print found valid relations
     printRelations(returned_relations)
