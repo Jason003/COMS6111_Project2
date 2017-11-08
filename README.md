@@ -12,6 +12,7 @@
 * Stanford-corenlp-full-2017/ directory and files
 * data.py, data.pyc: defines the data structure that is used
 * NLPCore.py, NLPCore.pyc
+* input.txt, input.txt.xml: These files just need to exist for the CoreNLP package to work
 
 ## Project Dependencies
 * BeautifulSoup
@@ -23,7 +24,9 @@
 * apt-get install python-setuptools <br/>
 * apt-get install python3-pip <br/>
 * pip3 install bs4 <br/>
-* apt-get install openjdk-7-jre <br/>
+Installing Java...
+* add-apt-repository ppa:webupd8team/java <br/>
+* apt update; sudo apt install oracle-java8-installer <br/>
 Once those packages are installed, two more packages need to be extracted:
 * This assignment
 * Standford CoreNLP package, downloaded at https://stanfordnlp.github.io/CoreNLP/
