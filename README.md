@@ -26,12 +26,8 @@ passw0rd
 
 ## Running the Code
 
-cd COMS6111_Project2
+cd COMS6111_Project2 <br/>
 python ise.py AIzaSyCATX_cG2DgsJjFtCdgcThfR2xaH7MSMl0 010829534362544137563:ndji7c0ivva \<relation\> \<threshold\> \<query\> \<K\>
-
-## How to Run
-
-TODO
 
 ## Algorithm Description and Design
 
