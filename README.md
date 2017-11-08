@@ -9,11 +9,25 @@
 * ise.py: The python script that runs everything
 * transcript.txt: A reference to the printouts for the execution of: python ise.py 4 0.35 "bill gates microsoft" 10
 * README.md: this file
+* Stanford-corenlp-full-2017/ directory and files
+* data.py, data.pyc: defines the data structure that is used
+* NLPCore.py, NLPCore.pyc
 
 ## Project Dependencies
 * BeautifulSoup
 * Stanford-corenlp-full-2017 on the same path as `ise.py`
 * Python 3+
+
+## Package-Installation Commands on Ubuntu 14.04 Google Cloud VM
+
+* apt-get install python-setuptools <br/>
+* apt-get install python3-pip <br/>
+* pip3 install bs4 <br/>
+* apt-get install openjdk-7-jre <br/>
+Once those packages are installed, two more packages need to be extracted:
+* This assignment
+* Standford CoreNLP package, downloaded at https://stanfordnlp.github.io/CoreNLP/
+  * Unfortunately, there is no easier way of doing this. (You should just be using our VM anyway!)
 
 ## Connecting to the Virtual Machine
 
@@ -26,8 +40,8 @@ passw0rd
 
 ## Running the Code
 
-cd COMS6111_Project2 <br/>
-python ise.py AIzaSyCATX_cG2DgsJjFtCdgcThfR2xaH7MSMl0 010829534362544137563:ndji7c0ivva \<relation\> \<threshold\> \<query\> \<K\>
+cd /home/project2/COMS6111_Project2 <br/>
+python3 ise.py AIzaSyCATX_cG2DgsJjFtCdgcThfR2xaH7MSMl0 010829534362544137563:ndji7c0ivva \<relation\> \<threshold\> \<query\> \<K\>
 
 ## Algorithm Description and Design
 
